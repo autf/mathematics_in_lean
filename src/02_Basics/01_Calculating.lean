@@ -12,12 +12,14 @@ end
 
 example (a b c : ℝ) : (c * b) * a = b * (a * c) :=
 begin
-  sorry
+  rw mul_comm c b,
+  rw mul_assoc,
+  rw mul_comm c a
 end
 
 example (a b c : ℝ) : a * (b * c) = b * (a * c) :=
 begin
-  sorry
+  rw mul_left_comm
 end
 
 /- An example. -/
@@ -33,12 +35,13 @@ end
 
 example (a b c : ℝ) : a * (b * c) = b * (c * a) :=
 begin
-  sorry
+  rw mul_comm,
+  rw mul_assoc
 end
 
 example (a b c : ℝ) : a * (b * c) = b * (a * c) :=
 begin
-  sorry
+  rw mul_left_comm
 end
 
 /- Using facts from the local context. -/
@@ -57,12 +60,15 @@ end
 example (a b c d e f : ℝ) (h : b * c = e * f) :
   a * b * c * d = a * e * f * d :=
 begin
-  sorry
+  rw mul_assoc a b,
+  rw mul_assoc a e,
+  rw h
 end
 
 example (a b c d : ℝ) (hyp : c = b * a - d) (hyp' : d = a * b) : c = 0 :=
 begin
-  sorry
+  rw [hyp, hyp', mul_comm],
+  apply sub_self
 end
 
 /- Examples. -/
@@ -122,10 +128,12 @@ calc
   (a + b) * (a + b)
       = a * a + b * a + (a * b + b * b) :
     begin
-      sorry
+      rw mul_add,
+      rw add_mul,
+      rw add_mul
     end
-  ... = a * a + (b * a + a * b) + b * b : by sorry
-  ... = a * a + 2 * (a * b) + b * b     : by sorry
+  ... = a * a + (b * a + a * b) + b * b : by rw [←add_assoc, add_assoc (a * a)]
+  ... = a * a + 2 * (a * b) + b * b     : by rw [mul_comm b a, ←two_mul]
 end
 
 /- Try these. For the second, use the theorems listed underneath. -/
@@ -134,11 +142,14 @@ section
 variables a b c d : ℝ
 
 example : (a + b) * (c + d) = a * c + a * d + b * c + b * d :=
-sorry
+by rw [add_mul, mul_add, mul_add, ←add_assoc]
+
 
 example (a b : ℝ) : (a + b) * (a - b) = a^2 - b^2 :=
 begin
-  sorry
+  rw [mul_sub, add_mul, add_mul, mul_comm b a],
+  rw [←sub_sub, ←add_sub, sub_self, add_zero],
+  rw [pow_two, pow_two]
 end
 
 #check pow_two a
