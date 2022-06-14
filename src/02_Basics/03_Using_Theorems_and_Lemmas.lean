@@ -55,7 +55,11 @@ le_refl x
 example (h₀ : a ≤ b) (h₁ : b < c) (h₂ : c ≤ d)
     (h₃ : d < e) :
   a < e :=
-sorry
+begin
+  have ac := lt_of_le_of_lt h₀ h₁,
+  have ad := lt_of_lt_of_le ac h₂,
+  exact lt_trans ad h₃
+end
 
 example (h₀ : a ≤ b) (h₁ : b < c) (h₂ : c ≤ d)
     (h₃ : d < e) :
@@ -105,7 +109,9 @@ end
 
 example (h₀ : d ≤ e) : c + exp (a + d) ≤ c + exp (a + e) :=
 begin
-  sorry
+  apply add_le_add_left,
+  rw exp_le_exp,
+  apply add_le_add_left h₀
 end
 
 example : (0 : ℝ) < 1 :=
@@ -114,11 +120,13 @@ by norm_num
 example (h : a ≤ b) : log (1 + exp a) ≤ log (1 + exp b) :=
 begin
   have h₀ : 0 < 1 + exp a,
-  { sorry },
+  { apply add_pos, norm_num, apply exp_pos },
   have h₁ : 0 < 1 + exp b,
-  { sorry },
+  { apply add_pos, norm_num, apply exp_pos },
   apply (log_le_log h₀ h₁).mpr,
-  sorry
+    apply add_le_add_left,
+    rw exp_le_exp,
+    exact h
 end
 
     example : 0 ≤ a^2 :=
@@ -128,7 +136,7 @@ end
     end
 
 example (h : a ≤ b) : c - exp b ≤ c - exp a :=
-  sorry
+  by finish
 
 example : 2*a*b ≤ a^2 + b^2 :=
 begin
@@ -153,7 +161,14 @@ begin
 end
 
 example : abs (a*b) ≤ (a^2 + b^2) / 2 :=
-sorry
+begin
+  have hp : a*b ≤ (a^2 + b^2) / 2, sorry,
+  have hm : -(a*b) ≤ (a^2 + b^2) / 2, sorry,
+  apply abs_le'.mpr,
+  split,
+    exact hp,
+  exact hm
+end
 
 #check abs_le'.mpr
 
