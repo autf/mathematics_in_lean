@@ -39,17 +39,74 @@ example : min a b = min b a := by
     apply min_le_left
 
 example : max a b = max b a := by
-  sorry
+  apply le_antisymm
+  repeat
+    -- ⊢ max x y ≤ max y x
+    apply max_le
+    -- ⊢ x ≤ max y x
+    apply le_max_right
+    -- ⊢ y ≤ max y x
+    apply le_max_left
+
 example : min (min a b) c = min a (min b c) := by
-  sorry
+  apply le_antisymm
+  · show min (min a b) c ≤ min a (min b c)
+    apply le_min
+    · show min (min a b) c ≤ a
+      calc
+      min (min a b) c ≤ min a b := by apply min_le_left
+      _ ≤ a := min_le_left a b
+    · show min (min a b) c ≤ min b c
+      apply le_min
+      · show min (min a b) c ≤ b
+        calc
+        min (min a b) c ≤ min a b := by apply min_le_left
+        _ ≤ b := by apply min_le_right
+      · show min (min a b) c ≤ c
+        apply min_le_right
+  · show min a (min b c) ≤ min (min a b) c
+    apply le_min
+    · show min a (min b c) ≤ min a b
+      apply le_min
+      · show min a (min b c) ≤ a
+        apply min_le_left
+      · show min a (min b c) ≤ b
+        calc
+        min a (min b c) ≤ min b c := by apply min_le_right
+        _ ≤ b := min_le_left b c
+    · show min a (min b c) ≤ c
+      calc
+      min a (min b c) ≤ min b c := by apply min_le_right
+      _ ≤ c := min_le_right b c
+
 theorem aux : min a b + c ≤ min (a + c) (b + c) := by
-  sorry
+  apply le_min
+  -- show min a b + c ≤ a + c
+  linarith [min_le_left a b]
+  -- show min a b + c ≤ b + c
+  linarith [min_le_right a b]
+
 example : min a b + c = min (a + c) (b + c) := by
-  sorry
+  apply le_antisymm
+  apply aux
+  -- show min (a + c) (b + c) ≤ min a b + c
+  have : (min (a + c) (b + c)) - c ≤ min a b
+  apply le_min
+  · have : min (a + c) (b + c) ≤ a + c := by apply min_le_left
+    linarith
+  · have : min (a + c) (b + c) ≤ b + c := by apply min_le_right
+    linarith
+  linarith
+
 #check (abs_add : ∀ a b : ℝ, |a + b| ≤ |a| + |b|)
 
-example : |a| - |b| ≤ |a - b| :=
-  sorry
+example : |a| - |b| ≤ |a - b| := by
+  have : |a| ≤ |a - b| + |b|
+  · calc
+    |a| = |a - b + b| := by ring_nf
+    _ ≤ |a - b| + |b| := by apply abs_add
+  linarith
+
 end
 
 section
@@ -66,7 +123,16 @@ example : x ∣ x ^ 2 := by
   apply dvd_mul_left
 
 example (h : x ∣ w) : x ∣ y * (x * z) + x ^ 2 + w ^ 2 := by
-  sorry
+  apply dvd_add
+  apply dvd_add
+  · apply dvd_mul_of_dvd_right
+    apply dvd_mul_right
+  · apply dvd_pow_self
+    norm_num
+  · apply dvd_pow
+    apply h
+    norm_num
+
 end
 
 section
@@ -78,7 +144,24 @@ variable (m n : ℕ)
 #check (Nat.lcm_zero_left n : Nat.lcm 0 n = 0)
 
 example : Nat.gcd m n = Nat.gcd n m := by
-  sorry
+  match m, n with
+  | 0, _
+  | _, 0
+  => rw [Nat.gcd_zero_left, Nat.gcd_zero_right]
+
+  | a+1, b+1
+  =>
+    if h : a ≤ b then
+      obtain h | heq := lt_or_eq_of_le h
+      · rw [Nat.gcd_def (b + 1)]; dsimp
+        have hb' : b + 1 ≠ 0 := by norm_num
+        rw [(Nat.mod_eq_iff_lt hb').mpr]
+        linarith
+      · rw [heq]
+    else
+      rw [Nat.gcd_def]; dsimp
+      have ha' : a + 1 ≠ 0 := by norm_num
+      rw [(Nat.mod_eq_iff_lt ha').mpr]
+      linarith
+
 end
-
-
