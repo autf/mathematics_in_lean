@@ -36,22 +36,83 @@ variable (x y z : α)
 #check (sup_le : x ≤ z → y ≤ z → x ⊔ y ≤ z)
 
 example : x ⊓ y = y ⊓ x := by
-  sorry
+  apply le_antisymm
+  repeat
+    apply le_inf
+    · apply inf_le_right
+    · apply inf_le_left
 
 example : x ⊓ y ⊓ z = x ⊓ (y ⊓ z) := by
-  sorry
+  apply le_antisymm
+  · apply le_inf
+    · apply le_trans
+      apply inf_le_left
+      apply inf_le_left
+    · apply le_inf
+      · apply le_trans
+        apply inf_le_left
+        apply inf_le_right
+      · apply inf_le_right
+  · apply le_inf
+    · apply le_inf
+      · apply inf_le_left
+      · apply le_trans
+        apply inf_le_right
+        apply inf_le_left
+    · apply le_trans
+      apply inf_le_right
+      apply inf_le_right
+
 
 example : x ⊔ y = y ⊔ x := by
-  sorry
+  apply le_antisymm
+  repeat
+    apply sup_le
+    apply le_sup_right
+    apply le_sup_left
 
 example : x ⊔ y ⊔ z = x ⊔ (y ⊔ z) := by
-  sorry
+  apply le_antisymm
+  · apply sup_le
+    · apply sup_le
+      · apply le_sup_left
+      · apply le_trans'
+        apply le_sup_right
+        apply le_sup_left
+    · apply le_trans'
+      apply le_sup_right
+      apply le_sup_right
+  · apply sup_le
+    · apply le_trans'
+      apply le_sup_left
+      apply le_sup_left
+    · apply sup_le
+      · apply le_trans'
+        apply le_sup_left
+        apply le_sup_right
+      · apply le_sup_right
 
 theorem absorb1 : x ⊓ (x ⊔ y) = x := by
-  sorry
+  apply le_antisymm
+
+  · show x ⊓ (x ⊔ y) ≤ x
+    apply inf_le_left
+
+  · show x ≤ x ⊓ (x ⊔ y)
+    apply le_inf
+    apply le_refl
+    apply le_sup_left
 
 theorem absorb2 : x ⊔ x ⊓ y = x := by
-  sorry
+  apply le_antisymm
+
+  · show x ⊔ (x ⊓ y) ≤ x
+    apply sup_le
+    apply le_refl
+    apply inf_le_left
+
+  · show x ≤ x ⊔ (x ⊓ y)
+    apply le_sup_left
 
 end
 
@@ -70,10 +131,25 @@ variable {α : Type*} [Lattice α]
 variable (a b c : α)
 
 example (h : ∀ x y z : α, x ⊓ (y ⊔ z) = x ⊓ y ⊔ x ⊓ z) : a ⊔ b ⊓ c = (a ⊔ b) ⊓ (a ⊔ c) := by
-  sorry
+  -- rw [h (a ⊔ b), inf_comm (a ⊔ b), absorb1, inf_comm (a ⊔ b), h, ← sup_assoc, inf_comm c a, absorb2, inf_comm]
+  apply Eq.symm
+  calc
+    (a ⊔ b) ⊓ (a ⊔ c) = (a ⊔ b) ⊓ a ⊔ (a ⊔ b) ⊓ c := by apply h
+    _ = a ⊓ (a ⊔ b) ⊔ (a ⊔ b) ⊓ c := by rw [inf_comm]
+    _ = a ⊔ (a ⊔ b) ⊓ c := by rw [absorb1]
+    _ = a ⊔ c ⊓ (a ⊔ b) := by rw [inf_comm]
+    _ = a ⊔ (c ⊓ a ⊔ c ⊓ b) := by rw [h]
+    _ = a ⊔ c ⊓ a ⊔ c ⊓ b := by rw [sup_assoc]
+    _ = a ⊔ a ⊓ c ⊔ c ⊓ b := by rw [inf_comm]
+    _ = a ⊔ c ⊓ b := by rw [absorb2]
+    _ = a ⊔ b ⊓ c := by rw [inf_comm]
 
 example (h : ∀ x y z : α, x ⊔ y ⊓ z = (x ⊔ y) ⊓ (x ⊔ z)) : a ⊓ (b ⊔ c) = a ⊓ b ⊔ a ⊓ c := by
-  sorry
+  rw [h]
+  rw [sup_comm (a ⊓ b), absorb2]
+  rw [sup_comm (a ⊓ b), h, ← inf_assoc]
+  rw [sup_comm c, absorb1]
+  rw [sup_comm]
 
 end
 
@@ -87,13 +163,28 @@ variable (a b c : R)
 #check (mul_nonneg : 0 ≤ a → 0 ≤ b → 0 ≤ a * b)
 
 example (h : a ≤ b) : 0 ≤ b - a := by
-  sorry
+  -- apply sub_nonneg.mpr h
+  calc
+    0 = -a + a := by rw [neg_add_cancel]
+    _ ≤ -a + b := by apply add_le_add_left h
+    _ = b - a := by rw [neg_add_eq_sub]
 
 example (h: 0 ≤ b - a) : a ≤ b := by
-  sorry
+  -- apply le_of_sub_nonneg h
+  calc
+    a = a + 0 := by rw [add_zero]
+    _ ≤ a + (b - a) := by apply add_le_add_left h
+    _ = a + (b + -a) := by rw [sub_eq_add_neg]
+    _ = a + (-a + b) := by rw [add_comm b]
+    _ = a + -a + b := by rw [← add_assoc]
+    _ = 0 + b := by rw [add_neg_cancel]
+    _ = b := by rw [zero_add]
 
 example (h : a ≤ b) (h' : 0 ≤ c) : a * c ≤ b * c := by
-  sorry
+  have : 0 ≤ b - a := sub_nonneg_of_le h
+  apply sub_nonneg.mp
+  rw [← mul_sub_right_distrib]
+  apply mul_nonneg this h'
 
 end
 
@@ -106,7 +197,12 @@ variable (x y z : X)
 #check (dist_triangle x y z : dist x z ≤ dist x y + dist y z)
 
 example (x y : X) : 0 ≤ dist x y := by
-  sorry
+  have := calc
+    0 = dist x x := by rw [dist_self x]
+    _ ≤ dist x y + dist y x := dist_triangle x y x
+    _ = dist x y + dist x y := by rw [dist_comm y x]
+    _ = dist x y * 2 := by ring
+  have h2 : 0 < (2 : ℝ) := by norm_num
+  apply (mul_nonneg_iff_of_pos_right h2).mp this
 
 end
-
