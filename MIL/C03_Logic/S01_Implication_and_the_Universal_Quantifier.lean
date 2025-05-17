@@ -42,10 +42,10 @@ theorem my_lemma4 :
     ∀ {x y ε : ℝ}, 0 < ε → ε ≤ 1 → |x| < ε → |y| < ε → |x * y| < ε := by
   intro x y ε epos ele1 xlt ylt
   calc
-    |x * y| = |x| * |y| := sorry
-    _ ≤ |x| * ε := sorry
-    _ < 1 * ε := sorry
-    _ = ε := sorry
+    |x * y| = |x| * |y| := by rw [abs_mul]
+    _ ≤ |x| * ε := by apply mul_le_mul (le_refl |x|) (le_of_lt ylt) (abs_nonneg y) (abs_nonneg x)
+    _ < 1 * ε := by apply mul_lt_mul (lt_of_lt_of_le xlt ele1) (le_refl ε) epos (by norm_num)
+    _ = ε := by rw [one_mul]
 
 def FnUb (f : ℝ → ℝ) (a : ℝ) : Prop :=
   ∀ x, f x ≤ a
@@ -63,15 +63,29 @@ example (hfa : FnUb f a) (hgb : FnUb g b) : FnUb (fun x ↦ f x + g x) (a + b) :
   apply hfa
   apply hgb
 
-example (hfa : FnLb f a) (hgb : FnLb g b) : FnLb (fun x ↦ f x + g x) (a + b) :=
-  sorry
+example (hfa : FnLb f a) (hgb : FnLb g b) : FnLb (fun x ↦ f x + g x) (a + b) := by
+  intro x
+  dsimp
+  apply add_le_add
+  apply hfa
+  apply hgb
 
-example (nnf : FnLb f 0) (nng : FnLb g 0) : FnLb (fun x ↦ f x * g x) 0 :=
-  sorry
+example (nnf : FnLb f 0) (nng : FnLb g 0) : FnLb (fun x ↦ f x * g x) 0 := by
+  intro x
+  dsimp
+  apply mul_nonneg
+  apply nnf
+  apply nng
 
 example (hfa : FnUb f a) (hgb : FnUb g b) (nng : FnLb g 0) (nna : 0 ≤ a) :
-    FnUb (fun x ↦ f x * g x) (a * b) :=
-  sorry
+    FnUb (fun x ↦ f x * g x) (a * b) := by
+  intro x
+  dsimp
+  apply mul_le_mul
+  apply hfa
+  apply hgb
+  apply nng
+  apply nna
 
 end
 
