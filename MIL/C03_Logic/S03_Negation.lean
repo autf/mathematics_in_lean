@@ -84,16 +84,32 @@ section
 variable {α : Type*} (P : α → Prop) (Q : Prop)
 
 example (h : ¬∃ x, P x) : ∀ x, ¬P x := by
-  sorry
+  intro x px
+  apply h ⟨x, px⟩
 
 example (h : ∀ x, ¬P x) : ¬∃ x, P x := by
-  sorry
+  rintro ⟨x, px⟩
+  apply h x px
 
+-- theorem not_forall.mp
 example (h : ¬∀ x, P x) : ∃ x, ¬P x := by
-  sorry
+  have contrapos : ¬(∃ x, ¬P x) → ∀ x, P x
+  -- · intro h' x
+  --   by_contra npx
+  --   exact h' ⟨x, npx⟩
+  · intro h' x
+    by_cases case : P x
+    · exact case
+    · exfalso; exact h' ⟨x, case⟩
+
+  by_cases case : ∃ x, ¬P x
+  · exact case
+  · exfalso; exact h (contrapos case)
 
 example (h : ∃ x, ¬P x) : ¬∀ x, P x := by
-  sorry
+  obtain ⟨x, npx⟩ := h
+  intro h'
+  apply npx (h' x)
 
 example (h : ¬∀ x, P x) : ∃ x, ¬P x := by
   by_contra h'
@@ -104,10 +120,23 @@ example (h : ¬∀ x, P x) : ∃ x, ¬P x := by
   exact h' ⟨x, h''⟩
 
 example (h : ¬¬Q) : Q := by
-  sorry
+  -- by_contra h'
+  -- exact h h'
+
+  -- by_cases h' : Q
+  -- · exact h'
+  -- · exfalso; exact h h'
+
+  if h' : Q then
+    exact h'
+  else -- h' : ¬Q
+    -- exfalso; exact h h'
+    exact False.elim (h h')
 
 example (h : Q) : ¬¬Q := by
-  sorry
+  -- by_contra h'
+  -- exact h' h
+  exact not_not.mpr h
 
 end
 
@@ -115,7 +144,15 @@ section
 variable (f : ℝ → ℝ)
 
 example (h : ¬FnHasUb f) : ∀ a, ∃ x, f x > a := by
-  sorry
+  intro a
+  apply not_forall_not.mp
+  intro h'
+  dsimp [FnHasUb, FnUb] at h
+  apply h
+  use a
+  intro x
+  apply le_of_not_gt
+  exact h' x
 
 example (h : ¬∀ a, ∃ x, f x > a) : FnHasUb f := by
   push_neg at h
@@ -127,7 +164,9 @@ example (h : ¬FnHasUb f) : ∀ a, ∃ x, f x > a := by
   exact h
 
 example (h : ¬Monotone f) : ∃ x y, x ≤ y ∧ f y < f x := by
-  sorry
+  dsimp only [Monotone] at h
+  push_neg at h
+  exact h
 
 example (h : ¬FnHasUb f) : ∀ a, ∃ x, f x > a := by
   contrapose! h
