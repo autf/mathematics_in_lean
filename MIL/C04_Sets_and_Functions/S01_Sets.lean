@@ -24,7 +24,7 @@ example (h : s ⊆ t) : s ∩ u ⊆ t ∩ u := by
   exact ⟨h xsu.1, xsu.2⟩
 
 example (h : s ⊆ t) : s ∩ u ⊆ t ∩ u :=
-  fun x ⟨xs, xu⟩ ↦ ⟨h xs, xu⟩
+  fun _x ⟨xs, xu⟩ ↦ ⟨h xs, xu⟩
 
 example : s ∩ (t ∪ u) ⊆ s ∩ t ∪ s ∩ u := by
   intro x hx
@@ -44,7 +44,10 @@ example : s ∩ (t ∪ u) ⊆ s ∩ t ∪ s ∩ u := by
   · right; exact ⟨xs, xu⟩
 
 example : s ∩ t ∪ s ∩ u ⊆ s ∩ (t ∪ u) := by
-  sorry
+  rintro e (⟨es, et⟩ | ⟨es, eu⟩)
+  · exact ⟨es, Or.inl et⟩
+  · exact ⟨es, Or.inr eu⟩
+
 example : (s \ t) \ u ⊆ s \ (t ∪ u) := by
   intro x xstu
   have xs : x ∈ s := xstu.1.1
@@ -64,7 +67,13 @@ example : (s \ t) \ u ⊆ s \ (t ∪ u) := by
   rintro (xt | xu) <;> contradiction
 
 example : s \ (t ∪ u) ⊆ (s \ t) \ u := by
-  sorry
+  intro x ⟨xs, h⟩
+  constructor
+  · constructor
+    · exact xs
+    · by_contra xt; exact h (Or.inl xt)
+  · by_contra xu; exact h (Or.inr xu)
+
 example : s ∩ t = t ∩ s := by
   ext x
   simp only [mem_inter_iff]
@@ -73,7 +82,7 @@ example : s ∩ t = t ∩ s := by
   · rintro ⟨xt, xs⟩; exact ⟨xs, xt⟩
 
 example : s ∩ t = t ∩ s :=
-  Set.ext fun x ↦ ⟨fun ⟨xs, xt⟩ ↦ ⟨xt, xs⟩, fun ⟨xt, xs⟩ ↦ ⟨xs, xt⟩⟩
+  Set.ext fun _x ↦ ⟨fun ⟨xs, xt⟩ ↦ ⟨xt, xs⟩, fun ⟨xt, xs⟩ ↦ ⟨xs, xt⟩⟩
 
 example : s ∩ t = t ∩ s := by ext x; simp [and_comm]
 
@@ -83,18 +92,46 @@ example : s ∩ t = t ∩ s := by
   · rintro x ⟨xt, xs⟩; exact ⟨xs, xt⟩
 
 example : s ∩ t = t ∩ s :=
-    Subset.antisymm sorry sorry
+  Subset.antisymm (fun _ ⟨_s, _t⟩ ↦ ⟨_t, _s⟩) (fun _ ⟨_t, _s⟩ ↦ ⟨_s, _t⟩)
+
 example : s ∩ (s ∪ t) = s := by
-  sorry
+  apply Subset.antisymm
+  · rintro x ⟨xs, _⟩; exact xs
+  · rintro x xs; exact ⟨xs, Or.inl xs⟩
 
 example : s ∪ s ∩ t = s := by
-  sorry
+  apply Subset.antisymm
+  · rintro x (xs | ⟨xs, xt⟩) <;> exact xs
+  · intro x xs; exact Or.inl xs
 
 example : s \ t ∪ t = s ∪ t := by
-  sorry
+  apply Subset.antisymm
+  · rintro x (⟨xs, xnt⟩ | xt)
+    exact Or.inl xs
+    exact Or.inr xt
+  · rintro x (_s | _t)
+    · by_cases x ∈ t
+      next _t => exact Or.inr _t
+      next nt => exact Or.inl ⟨_s, nt⟩
+    · exact Or.inr _t
 
 example : s \ t ∪ t \ s = (s ∪ t) \ (s ∩ t) := by
-  sorry
+  apply Subset.antisymm
+  · rintro x (⟨_s, nt⟩ | ⟨_t, ns⟩)
+    · constructor
+      exact Or.inl _s
+      rintro ⟨_, _t⟩; exact nt _t
+    · constructor
+      exact Or.inr _t
+      rintro ⟨_s, _⟩; exact ns _s
+
+  · rintro x ⟨_s | _t, h⟩
+    · by_cases x ∈ t
+      next _t => exact False.elim (h ⟨_s, _t⟩)
+      next nt => exact Or.inl ⟨_s, nt⟩
+    · by_cases x ∈ s
+      next _s => exact False.elim (h ⟨_s, _t⟩)
+      next ns => exact Or.inr ⟨_t, ns⟩
 
 def evens : Set ℕ :=
   { n | Even n }
@@ -235,4 +272,3 @@ example : ⋂₀ s = ⋂ t ∈ s, t := by
   rfl
 
 end
-
