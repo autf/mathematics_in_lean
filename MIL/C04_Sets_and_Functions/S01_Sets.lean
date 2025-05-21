@@ -152,7 +152,14 @@ example (x : ℕ) : x ∈ (univ : Set ℕ) :=
   trivial
 
 example : { n | Nat.Prime n } ∩ { n | n > 2 } ⊆ { n | ¬Even n } := by
-  sorry
+  intro n ⟨h1, h2⟩ ⟨r, hr⟩
+  simp at *
+  have : r ∣ n := by
+    have : r + r ∣ n := (Nat.Prime.dvd_iff_eq h1 (by linarith)).mpr hr
+    rcases this with ⟨k, hk⟩
+    use 2 * k
+    linarith
+  apply Nat.not_prime_of_dvd_of_ne this (by linarith) (by linarith) h1
 
 #print Prime
 
@@ -188,10 +195,13 @@ section
 variable (ssubt : s ⊆ t)
 
 example (h₀ : ∀ x ∈ t, ¬Even x) (h₁ : ∀ x ∈ t, Prime x) : ∀ x ∈ s, ¬Even x ∧ Prime x := by
-  sorry
+  intro x h
+  have st := ssubt h
+  exact ⟨h₀ x st, h₁ x st⟩
 
 example (h : ∃ x ∈ s, ¬Even x ∧ Prime x) : ∃ x ∈ t, Prime x := by
-  sorry
+  rcases h with ⟨x, _s, _, p⟩
+  exact ⟨x, ssubt _s, p⟩
 
 end
 
@@ -230,7 +240,27 @@ example : (⋂ i, A i ∩ B i) = (⋂ i, A i) ∩ ⋂ i, B i := by
 
 
 example : (s ∪ ⋂ i, A i) = ⋂ i, A i ∪ s := by
-  sorry
+  apply Subset.antisymm
+  . rintro x (_s | _I) b ⟨i, h⟩
+    · dsimp at h
+      rw [← h]
+      exact Or.inr _s
+    · dsimp at h
+      rw [← h]
+      left
+      apply _I
+      use i
+
+  · rintro x h
+    by_cases x ∈ s
+    next _s => exact Or.inl _s
+    next ns =>
+      right
+      simp at *
+      intro i
+      rcases h i
+      next h' => exact h'
+      next _s => exact False.elim (ns _s)
 
 def primes : Set ℕ :=
   { x | Nat.Prime x }
@@ -251,7 +281,13 @@ example : (⋂ p ∈ primes, { x | ¬p ∣ x }) ⊆ { x | x = 1 } := by
   apply Nat.exists_prime_and_dvd
 
 example : (⋃ p ∈ primes, { x | x ≤ p }) = univ := by
-  sorry
+  ext x
+  constructor
+  · simp
+  · simp
+    rcases Nat.exists_infinite_primes x with ⟨p, lep, pp⟩
+    use p
+    exact ⟨by apply pp, lep⟩
 
 end
 
